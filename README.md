@@ -1,5 +1,6 @@
 Building a simple blog application that has a User, Post, Comment, Category model. Here is the overview:
 
+```
 User
  -id
  -name
@@ -34,5 +35,6 @@ Comment
  -content
  -post_id
  -user_id
+ ```
 
  I'll start with generating some static pages, like and about and contact page.
