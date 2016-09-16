@@ -296,7 +296,26 @@ ActiveRecord::Schema.define(version: 20160916151846) do
 end
 ```
 
-Now, the email addresses `jsmalls@snailmail.com` and `JSmalls@SNAILMAIL.com`, will be treated the same. This is not the case with other databases which use case-sensitive indices. So, this example, would be considered as two different email addresses. A quick fix is to make all email addresses lowercase before the user is saved with a callback method in the  `User` model.
+Now, the email addresses `jsmalls@snailmail.com` and `JSmalls@SNAILMAIL.com`, will be treated the same. So if another user signs up and uses this same email in any of its flavors, it will fail.
+
+```
+user2 = User.new name: "John", email: "JSMALLS@SNAILMAIL.COM"
+
+user2.save
+
+(0.2ms)  SAVEPOINT active_record_1
+  User Exists (0.3ms)  SELECT  1 AS one FROM "users" WHERE LOWER("users"."email") = LOWER('jsmalls@snailmail.com') LIMIT 1
+   (0.1ms)  ROLLBACK TO SAVEPOINT active_record_1
+
+=> false
+
+$ user2.errors.full_messages
+
+=> ["Email has already been taken"]
+```
+
+
+This is not the case with other databases which use case-sensitive indices. So, this example, would be considered as two different email addresses. A quick fix is to make all email addresses lowercase before the user is saved with a callback method in the  `User` model.
 
 ```ruby
 class User < ActiveRecord::Base
@@ -313,4 +332,52 @@ class User < ActiveRecord::Base
 end
 ```
 
-The `before_save` callback method, will get invoked at a particular point in the lifecycle of an Active Record object. In this case, that point is before the object is saved,
+The `before_save` callback method, will get invoked at a particular point in the lifecycle of an Active Record object. In this case, that point is before the object is saved.
+
+### Adding a secure password
+
+We'll add another attribute or field to the `User` model. This will be reflected in the column of our `users` table. The password will be store as a `hash` in the database. `hash` refers to the result of applying an irreversible hash function to input data.
+
+The goal here is to take the password the user submits, hash it, and compare the result to the hashed value stored in the database. If the two match, then the submitted password is correct and the user is authenticated. Here, we are not comparing the raw password but a hashed password. To accomplish this will use the `bcrypt` gem.
+
+To use its functionality, we need to create a migration with a field in the `users` table named `password_digest` of type string. Now we are ready to hash the password with `bcrypt`, just uncomment from the Gemfile and run  `bundle install`. In the `User` model, add the `has_secure_password` macro. This macro will give you some attributes like `password`, `password_confirmation` and the method `authenticate` that returns `true` or `false`.
+
+
+```ruby
+class User < ActiveRecord::Base
+
+  ...
+
+  has_secure_password
+
+  ...
+```
+
+#### Creating a user
+
+```
+$ user = User.create(name: "Joe", email: "jsmalls@snailmail.com", password: "guacamole", password_confirmation: "guacamole")
+
+(0.1ms)  SAVEPOINT active_record_1
+  User Exists (0.2ms)  SELECT  1 AS one FROM "users" WHERE LOWER("users"."email") = LOWER('jsmalls@snailmail.com') LIMIT 1
+  SQL (0.4ms)  INSERT INTO "users" ("name", "email", "password_digest", "created_at", "updated_at") VALUES (?, ?, ?, ?, ?)  [["name", "Joe"], ["email", "jsmalls@snailmail.com"], ["password_digest", "$2a$10$tmOEKJPtqp4SVAME7ezb9Ozn9iY2eveh.H4y6/xKtdjg7v5nKCjGa"], ["created_at", "2016-09-16 18:40:11.090582"], ["updated_at", "2016-09-16 18:40:11.090582"]]
+   (0.1ms)  RELEASE SAVEPOINT active_record_1
+
+=> #<User id: 1, name: "Joe", email: "jsmalls@snailmail.com", created_at: "2016-09-16 18:40:11", updated_at: "2016-09-16 18:40:11", password_digest: "$2a$10$tmOEKJPtqp4SVAME7ezb9Ozn9iY2eveh.H4y6/xKtdj...">
+```
+
+If you look at the output, you'll see the `password_digest` field has been hashed. In theory, our user can login in, submit his or her password, which gets checked by the `authenticate` method. Then it compares the what the result to the `password_digest` in the database. To test it:
+
+```
+$ user.authenticate("somepassword")
+
+=> false
+
+$ user.authenticate("guacamole")
+
+=> #<User id: 1, name: "Joe", email: "jsmalls@snailmail.com", created_at: "2016-09-16 18:40:11", updated_at: "2016-09-16 18:40:11", password_digest: "$2a$10$tmOEKJPtqp4SVAME7ezb9Ozn9iY2eveh.H4y6/xKtdj...">
+
+$ !!user.authenticate("guacamole")
+
+=> true
+```
