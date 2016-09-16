@@ -1,4 +1,6 @@
-## Building a simple blog application that has a User, Post, Comment, Category model. Here is the overview:
+## Building a simple blog application.
+
+This app will have a User, Post, Comment, Category model. Here is the overview:
 
 ```
 User
@@ -338,7 +340,7 @@ The `before_save` callback method, will get invoked at a particular point in the
 
 We'll add another attribute or field to the `User` model. This will be reflected in the column of our `users` table. The password will be store as a `hash` in the database. `hash` refers to the result of applying an irreversible hash function to input data.
 
-The goal here is to take the password the user submits, hash it, and compare the result to the hashed value stored in the database. If the two match, then the submitted password is correct and the user is authenticated. Here, we are not comparing the raw password but a hashed password. To accomplish this will use the `bcrypt` gem.
+The goal here is to take the password the user submits, hash it, and compare the result to the hashed value stored in the database. If the two match, then the submitted password is correct and the user is authenticated. Here, we are not comparing the raw password but a hashed password. To accomplish this will use the `bcrypt` gem. By design, the `bcrypt` algorithm produces a salted hash, which protects against two important classes of attacks (dictionary attacks and rainbow table attacks).
 
 To use its functionality, we need to create a migration with a field in the `users` table named `password_digest` of type string. Now we are ready to hash the password with `bcrypt`, just uncomment from the Gemfile and run  `bundle install`. In the `User` model, add the `has_secure_password` macro. This macro will give you some attributes like `password`, `password_confirmation` and the method `authenticate` that returns `true` or `false`.
 
@@ -366,7 +368,9 @@ $ user = User.create(name: "Joe", email: "jsmalls@snailmail.com", password: "gua
 => #<User id: 1, name: "Joe", email: "jsmalls@snailmail.com", created_at: "2016-09-16 18:40:11", updated_at: "2016-09-16 18:40:11", password_digest: "$2a$10$tmOEKJPtqp4SVAME7ezb9Ozn9iY2eveh.H4y6/xKtdj...">
 ```
 
-If you look at the output, you'll see the `password_digest` field has been hashed. In theory, our user can login in, submit his or her password, which gets checked by the `authenticate` method. Then it compares the what the result to the `password_digest` in the database. To test it:
+If you look at the output, you'll see the `password_digest` field has been hashed. In theory, our user can login in, submit his or her password, which gets checked by the `authenticate` method. Then it compares the what the result to the `password_digest` in the database.
+
+To test it:
 
 ```
 $ user.authenticate("somepassword")
@@ -381,3 +385,139 @@ $ !!user.authenticate("guacamole")
 
 => true
 ```
+### Creating a sign up form.
+
+Now with all these components working, we can create a sign up form that will benefit from the way we set out app thus far.
+
+First, we need to add a route for our `users` resources and add the corresponding actions that we want to use in the `users_controller`.
+
+```ruby
+Rails.application.routes.draw do
+  get 'signup', to: 'users#new'
+  root 'static_pages#home'
+  get 'about', to: 'static_pages#about'
+  get 'contact' => 'static_pages#contact'
+  resources :users
+end
+```
+
+The `resources :users` route, add all the actions needed for a RESTful `users` resource, along with a number of named routes for generating URLs.
+
+In the `users_controller`, you can use any of the actions provide. Calling the `show` action will render the code in its corresponding view, in this case, `app/views/users/show.html.erb`. The URL this action generates is `/users/:id`, where `:id` is a placeholder for a given record found in the database.
+
+```ruby
+class UsersController < ApplicationController
+  def new
+  end
+
+  def show
+    @user = User.find(params[:id])
+  end
+end
+```
+
+Notice that we are using the `params` to retrieve the user id. Here `params[:id]` is the same as the `find` method `User.find(1)`. So when the user navigates to `/users/1`, he or she will be shown the record in the database that has the value of `1`.
+
+
+ The view rendered for the show action will use the instance variable `@user` to display the information the user requested. The `<%=  %>` are embedded ruby tags that allow you to share information from the show action in the `users_controller` and the `show.html>erb` in the `app/views/users`.
+
+```html
+<h1><%= @user.name %>, <%= @user.email %></h1>
+```
+
+#### Creating the form
+
+Just like the show action in the `users_controller`, we need to let our `User` model know that we want to create a new user. We do this in the `new` action and with the form in the `app/views/users/new.html.erb`
+
+```ruby
+class UsersController < ApplicationController
+  def new
+    @user = User.new
+  end
+
+  def show
+    @user = User.find(params[:id])
+  end
+end
+```
+
+```html
+<h1>Sign up</h1>
+
+<div class="row">
+  <div class="col-md-6 col-md-offset-3">
+    <%= form_for(@user) do |f| %>
+      <%= f.label :name %>
+      <%= f.text_field :name %>
+
+      <%= f.label :email %>
+      <%= f.email_field :email %>
+
+      <%= f.label :password %>
+      <%= f.password_field :password %>
+
+      <%= f.label :password_confirmation, "Confirmation" %>
+      <%= f.password_field :password_confirmation %>
+
+      <%= f.submit "Create account", class: "btn btn-primary" %>
+    <% end %>
+  </div>
+</div>
+```
+
+Here the `form_for` is a Active Record method that can look in the `@user` object and can populate the field based on the object's attributes. It also creates the needed HTML for you. Once the user submits the form, this methods knows to send it over the `create` action in the `users_controller`.
+
+```html
+<form accept-charset="UTF-8" action="/users" class="new_user"
+      id="new_user" method="post">
+  <input name="utf8" type="hidden" value="&#x2713;" />
+  <input name="authenticity_token" type="hidden"
+         value="NNb6+J/j46LcrgYUC60wQ2titMuJQ5lLqyAbnbAUkdo=" />
+  <label for="user_name">Name</label>
+  <input id="user_name" name="user[name]" type="text" />
+
+  <label for="user_email">Email</label>
+  <input id="user_email" name="user[email]" type="email" />
+
+  <label for="user_password">Password</label>
+  <input id="user_password" name="user[password]"
+         type="password" />
+
+  <label for="user_password_confirmation">Confirmation</label>
+  <input id="user_password_confirmation"
+         name="user[password_confirmation]" type="password" />
+
+  <input class="btn btn-primary" name="commit" type="submit"
+         value="Create account" />
+</form>
+```
+
+```ruby
+class UsersController < ApplicationController
+  def new
+    @user = User.new
+  end
+
+  def create
+    @user = User.new(user_params)
+    if @user.save
+      flash[:success] = "Welcome to the Blogr App!"
+      redirect_to user_path(@user)
+    else
+      render :new
+    end
+  end
+
+  def show
+    @user = User.find(params[:id])
+  end
+
+  private
+
+  def user_params
+    params.require(:user).permit(:name, :email, :password, :password_confirmation)
+  end
+end
+```
+
+the  `create` action takes the user's input from the `new` action's template. The it checks to see if `@user.save` returns `true`, if so, it will display a message in the user's show page.
