@@ -110,3 +110,91 @@ $ rails db:migrate
 ```
 
 Running this command creates a file calles `db/development.sqlite3`, which is a SQLite database and `db/schema.rb` file. The `schema.rb` file is used to keep track of the structure of the database, called schema.
+
+Looking at our `User` model, it inherites from the `ActiveRecord::Base`. This means that the `User` model automatically has all the functionality of the `ActiveRecord::Base` class. To test this, just drop in a rails console session.
+
+```
+$ rails c -s
+
+$ user = User.new
+```
+
+And sure enough, there is the `user` object with its attributes, which represent an individual column in the database table.
+
+```
+=> #<User id: nil, name: nil, email: nil, created_at: nil, updated_at: nil>
+irb(main):002:0>
+```
+
+But this doesn't mean that is object is saved in the database. It only saves in "memory". We have to tell Active Record our intent. On a side note, because we don't have any "validation" in place, yet, such as if the name field contains a value, checking its "validity", will return `true`.
+
+```
+user.valid?
+
+=> true
+```
+
+`valid?` happens to be a method provided due to inheritance.
+
+Lets save this new `User` object to the database, but first, add some value in its attributes.
+
+```
+$ user.save
+
+(0.2ms)  SAVEPOINT active_record_1
+ SQL (0.7ms)  INSERT INTO "users" ("name", "email", "created_at", "updated_at") VALUES (?, ?, ?, ?)  [["name", "Joe"], ["email", "j@j.com"], ["created_at", "2016-09-16 13:12:17.817497"], ["updated_at", "2016-09-16 13:12:17.817497"]]
+  (0.2ms)  RELEASE SAVEPOINT active_record_1
+=> true
+
+$ user
+
+=> #<User id: 1, name: "Joe", email: "j@j.com", created_at: "2016-09-16 13:12:17", updated_at: "2016-09-16 13:12:17">
+```
+
+The new `User` object was saved to the database when we used the `save` method, which returns `true`. Behind the scene, rails executed some SQL, as promised. At this point, any object we save should succeed because there are no validations.
+
+If we need to change some of the attributes after the object has been save to the database, we do this like this:
+
+```
+$ user.email = "j@snailmail.com"
+
+=> "j@snailmail.com"
+
+$ user.save
+
+=> #<User id: 1, name: "Joe", email: "j@snailmail.com", created_at: "2016-09-16 13:12:17", updated_at: "2016-09-16 13:50:05">
+```
+
+If we want to update multiple attributes, use the `update_attributes` method on the object you want to update, which accepts a hash.
+
+```
+user.update_attributes name: "Joe Smalls", email: "jsmalls@snailmail.com"
+```
+
+For a single attribute update:
+
+```
+user.update_attribute name: "John Smalls"
+```
+
+A handy method, if you want to find a record by its `id`, is the `find` method.
+
+```
+$ User.find(1)
+
+User Load (0.1ms)  SELECT  "users".* FROM "users" WHERE "users"."id" = ? LIMIT 1  [["id", 1]]
+
+=> #<User id: 1, name: "Joe", email: "j@j.com", created_at: "2016-09-16 13:12:17", updated_at: "2016-09-16 13:12:17">
+```
+
+But if you can't remember the `id` value, you can use the `find_by` method instead. `find_by` allows you to pass in a key/value pair, where the key is the attribute and the value is what is store in the database as its value.
+
+```
+User.find_by name: "Joe"
+
+User Load (0.4ms)  SELECT  "users".* FROM "users" WHERE "users"."name" = ? LIMIT 1  [["name", "Joe"]]
+
+=> #<User id: 1, name: "Joe", email: "j@j.com", created_at: "2016-09-16 13:12:17", updated_at: "2016-09-16 13:12:17">
+```
+
+Other options are `.first`, `.all`, which do what they say.
