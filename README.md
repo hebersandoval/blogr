@@ -38,3 +38,7 @@ Comment
  ```
 
  I'll start with generating some static pages, like and about and contact page.
+
+```
+$ rails generate controller StaticPages home about contact
+ ```
