@@ -530,38 +530,38 @@ Put the AR associations description here.
 
 posts_table
 
- | id  | title  | content  | user_id  |
- | :-- | :----- | :------- | :------- |
- |     |        |          |          |
- |     |        |          |          |
+| id  | title  | content  | user_id  |
+| :-- | :----- | :------- | :------- |
+|     |        |          |          |
+|     |        |          |          |
 
 Put the AR associations description here.
 
 categories_posts_table
 
- | id  | category_id  | post_id  |
- | :-- | :----------- | :------- |
- |     |              |          |
- |     |              |          |
+| id  | category_id  | post_id  |
+| :-- | :----------- | :------- |
+|     |              |          |
+|     |              |          |
 
 Put the AR associations description here.
 
 categories_table
 
- | id  | name  |
- | :-- | :---- |
- |     |       |
- |     |       |
+| id  | name  |
+| :-- | :---- |
+|     |       |
+|     |       |
 
 
 Put the AR associations description here.
 
 comments_table
 
-  | id  | content  | post_id  | user_id  |
-  | :-- | :------- | :------- | :------- |
-  |     |          |          |          |
-  |     |          |          |          |
+| id  | content  | post_id  | user_id  |
+| :-- | :------- | :------- | :------- |
+|     |          |          |          |
+|     |          |          |          |
 
 Put the AR associations description here.
 
