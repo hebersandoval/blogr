@@ -9,14 +9,6 @@ User
  -email
  -password_digest
 
-Profile #=> many not implement
- -name
- -bio
- -bod
- -color
- -twitter
- -user_id
-
 Post
  -id
  -title
@@ -521,3 +513,102 @@ end
 ```
 
 the  `create` action takes the user's input from the `new` action's template. The it checks to see if `@user.save` returns `true`, if so, it will display a message in the user's show page.
+
+### login
+
+
+### Connecting the other models
+
+users_table
+
+| id  | name  | email  | password_digest  |
+| :-- | :---- | :----- | :--------------- |
+|     |       |        |                  |
+|     |       |        |                  |
+
+Put the AR associations description here.
+
+posts_table
+
+ | id  | title  | content  | user_id  |
+ | :-- | :----- | :------- | :------- |
+ |     |        |          |          |
+ |     |        |          |          |
+
+Put the AR associations description here.
+
+categories_posts_table
+
+ | id  | category_id  | post_id  |
+ | :-- | :----------- | :------- |
+ |     |              |          |
+ |     |              |          |
+
+Put the AR associations description here.
+
+categories_table
+
+ | id  | name  |
+ | :-- | :---- |
+ |     |       |
+ |     |       |
+
+
+Put the AR associations description here.
+
+comments_table
+
+  | id  | content  | post_id  | user_id  |
+  | :-- | :------- | :------- | :------- |
+  |     |          |          |          |
+  |     |          |          |          |
+
+Put the AR associations description here.
+
+The models.
+
+```ruby
+class User < ActiveRecord::Base
+  has_many :posts
+  has_many :replies, through: :posts, source: :comments
+end
+```
+
+More stuff, up next...
+
+```ruby
+class Post < ActiveRecord::Base
+  belongs_to :user
+  has_many :categories_posts
+  has_many :categories, through: :categories_posts
+end
+```
+
+More stuff, up next...
+
+ ```ruby
+ class CategoryPost < ActiveRecord::Base
+   belongs_to :category
+   belongs_to :post
+ end
+ ```
+
+ More stuff, up next...
+
+ ```ruby
+ class Category < ActiveRecord::Base
+   has_many :categories_posts
+   has_many :posts, through: :categories_posts
+ end
+ ```
+
+ More stuff, up next...
+
+ ```ruby
+ class Comment < ActiveRecord::Base
+   belongs_to :post
+   belongs_to :user
+ end
+ ```
+
+ More stuff, up next...
