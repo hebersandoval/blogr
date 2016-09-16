@@ -70,3 +70,11 @@ $ rails generate controller StaticPages home about contact
  ```
 
  Some code was not included for brevity. If you like to clean this document a bit more, creating a partial to hold the rails defaults inside the head, would make it more readable. With some layout styles out of the way, lets start creating our models.
+
+ The User Model.
+
+ ```
+ $ rails generate controller Users new
+ ```
+
+ Here we're just generating a action called `new` in the `users_controller`.
